@@ -2,53 +2,56 @@ const Lead = require('../models/Lead');
 const paginate = require('../utils/pagination');
 
 
-// Create lead
+
 exports.createLead = async (req, res, next) => {
-try {
-const payload = req.body;
-const lead = await Lead.create(payload);
-return res.status(201).json({ success: true, data: lead });
-} catch (err) {
-next(err);
-}
+  try {
+    const payload = req.body;
+    const lastLead = await Lead.findOne().sort({ leadId: -1 });
+    payload.leadId = lastLead ? lastLead.leadId + 1 : 1;
+
+    const lead = await Lead.create(payload);
+    return res.status(201).json({ success: true, data: lead });
+  } catch (err) {
+    next(err);
+  }
 };
-// Get single lead
+
 exports.getLead = async (req, res, next) => {
-try {
-const lead = await Lead.findById(req.params.id);
-if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
-return res.json({ success: true, data: lead });
-} catch (err) {
-next(err);
-}
+  try {
+    const leadId = Number(req.params.id); // convert to number
+    if (isNaN(leadId)) return res.status(400).json({ success: false, message: 'Invalid leadId' });
+
+    const lead = await Lead.findOne({ leadId });
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+
+    return res.json({ success: true, data: lead });
+  } catch (err) {
+    next(err);
+  }
 };
-
-
-// Update lead
 exports.updateLead = async (req, res, next) => {
-try {
-const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
-return res.json({ success: true, data: lead });
-} catch (err) {
-next(err);
-}
+  try {
+    const leadId = Number(req.params.id);
+    const lead = await Lead.findOneAndUpdate({ leadId }, req.body, { new: true, runValidators: true });
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    return res.json({ success: true, data: lead });
+  } catch (err) {
+    next(err);
+  }
 };
 
-
-// Delete lead
 exports.deleteLead = async (req, res, next) => {
-try {
-const lead = await Lead.findByIdAndDelete(req.params.id);
-if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
-return res.json({ success: true, message: 'Lead deleted' });
-} catch (err) {
-next(err);
-}
+  try {
+    const leadId = Number(req.params.id);
+    const lead = await Lead.findOneAndDelete({ leadId });
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    return res.json({ success: true, message: 'Lead deleted' });
+  } catch (err) {
+    next(err);
+  }
 };
 
 
-// List leads with filtering & pagination
 exports.listLeads = async (req, res, next) => {
 try {
 const { page = 1, limit = 10, q, status, source } = req.query;

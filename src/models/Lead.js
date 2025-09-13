@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const LeadSchema = new mongoose.Schema(
 {
+    leadId: { type: Number, required: true, unique: true },
 firstName: { type: String, required: true, trim: true },
 lastName: { type: String, trim: true },
 email: { type: String, required: true, lowercase: true, trim: true },
